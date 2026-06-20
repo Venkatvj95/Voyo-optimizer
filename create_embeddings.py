@@ -47,7 +47,9 @@ def create_vector_db(uploaded_file):
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
+    print("Docs count:", len(docs))
     db = Chroma.from_documents(
+        
         documents=docs,
         embedding=embedding
     )
