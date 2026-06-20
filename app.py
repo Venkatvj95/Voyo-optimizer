@@ -52,7 +52,22 @@ if uploaded_file is not None and not st.session_state.file_processed:
 
     with st.spinner("Processing XML and creating embeddings..."):
 
-        db = create_vector_db(uploaded_file)
+        #db = create_vector_db(uploaded_file)
+
+        # new lines
+        try:
+            db = create_vector_db(uploaded_file)
+
+            st.session_state.rag_chain = create_rag_chain(db)
+
+            st.session_state.file_processed = True
+
+        except Exception as e:
+            st.error(str(e))
+            st.stop()
+
+
+        # end
 
         st.session_state.rag_chain = create_rag_chain(db)
 

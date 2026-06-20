@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import streamlit as st
 
 from langchain_groq import ChatGroq
 
@@ -12,7 +13,11 @@ from langchain_core.output_parsers import StrOutputParser
 load_dotenv()
 
 # Check Groq API Key
-groq_api_key = os.getenv("GROQ_API_KEY")
+#groq_api_key = os.getenv("GROQ_API_KEY")
+groq_api_key = st.secrets.get(
+    "GROQ_API_KEY",
+    os.getenv("GROQ_API_KEY")
+)
 
 if not groq_api_key:
     raise ValueError(
