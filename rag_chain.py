@@ -18,7 +18,7 @@ groq_api_key = st.secrets.get(
     "GROQ_API_KEY",
     os.getenv("GROQ_API_KEY")
 )
-st.write("Key found:", bool(groq_api_key))
+
 if not groq_api_key:
     raise ValueError(
         "GROQ_API_KEY not found in .env file"

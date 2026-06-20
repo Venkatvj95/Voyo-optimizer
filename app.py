@@ -5,7 +5,7 @@ from rag_chain import create_rag_chain
 
 
 # -----------------------------
-# Page Title
+# Page Config
 # -----------------------------
 
 st.set_page_config(
@@ -15,13 +15,14 @@ st.set_page_config(
 )
 
 st.title("🤖 Process Optimization Assistant")
+
 st.write(
-    "Upload a SIMPLACE XML file and ask questions about process optimization."
+    "Upload a process XML file and ask optimization questions."
 )
 
 
 # -----------------------------
-# Session State Initialization
+# Session State
 # -----------------------------
 
 if "messages" not in st.session_state:
@@ -30,12 +31,24 @@ if "messages" not in st.session_state:
 if "rag_chain" not in st.session_state:
     st.session_state.rag_chain = None
 
-if "file_processed" not in st.session_state:
-    st.session_state.file_processed = False
+if "current_file" not in st.session_state:
+    st.session_state.current_file = None
 
+# Reset Button
+# -----------------------------
+
+if st.button("🔄 Reset Session"):
+
+    st.session_state.messages = []
+
+    st.session_state.rag_chain = None
+
+    st.session_state.current_file = None
+
+    st.rerun()
 
 # -----------------------------
-# XML Upload
+# Upload XML
 # -----------------------------
 
 uploaded_file = st.file_uploader(
@@ -45,49 +58,56 @@ uploaded_file = st.file_uploader(
 
 
 # -----------------------------
-# Process XML
+# Process New XML
 # -----------------------------
 
-if uploaded_file is not None and not st.session_state.file_processed:
+if uploaded_file is not None:
 
-    with st.spinner("Processing XML and creating embeddings..."):
+    # Process only when a different file is uploaded
+    if st.session_state.current_file != uploaded_file.name:
 
-        #db = create_vector_db(uploaded_file)
+        with st.spinner("Processing XML..."):
 
-        # new lines
-        try:
-            db = create_vector_db(uploaded_file)
+            try:
 
-            st.session_state.rag_chain = create_rag_chain(db)
+                db = create_vector_db(uploaded_file)
 
-            st.session_state.file_processed = True
+                st.session_state.rag_chain = create_rag_chain(db)
 
-        except Exception as e:
-            st.error(str(e))
-            st.stop()
+                # Remember current file
+                st.session_state.current_file = uploaded_file.name
 
+                # Clear previous chat
+                st.session_state.messages = []
 
-        # end
+                st.success(
+                    f"✅ Processed: {uploaded_file.name}"
+                )
 
-        st.session_state.rag_chain = create_rag_chain(db)
+            except Exception as e:
 
-        st.session_state.file_processed = True
+                st.error(
+                    f"Error processing XML: {str(e)}"
+                )
 
-    st.success("✅ XML processed successfully!")
+                st.stop()
 
 
 # -----------------------------
-# Display Chat History
+# Chat History
 # -----------------------------
 
 for message in st.session_state.messages:
 
     with st.chat_message(message["role"]):
-        st.write(message["content"])
+
+        st.write(
+            message["content"]
+        )
 
 
 # -----------------------------
-# Chat Input
+# User Question
 # -----------------------------
 
 question = st.chat_input(
@@ -96,18 +116,19 @@ question = st.chat_input(
 
 
 # -----------------------------
-# Ask LLM
+# Ask AI
 # -----------------------------
 
 if question:
 
     if st.session_state.rag_chain is None:
 
-        st.warning("⚠️ Please upload an XML file first.")
+        st.warning(
+            "Please upload an XML file first."
+        )
 
     else:
 
-        # User Message
         st.session_state.messages.append(
             {
                 "role": "user",
@@ -116,13 +137,17 @@ if question:
         )
 
         with st.chat_message("user"):
+
             st.write(question)
 
-        # AI Response
-        with st.spinner("Analyzing process..."):
+        with st.spinner(
+            "Analyzing process..."
+        ):
 
-            answer = st.session_state.rag_chain.invoke(
-                question
+            answer = (
+                st.session_state
+                .rag_chain
+                .invoke(question)
             )
 
         st.session_state.messages.append(
@@ -132,5 +157,8 @@ if question:
             }
         )
 
-        with st.chat_message("assistant"):
+        with st.chat_message(
+            "assistant"
+        ):
+
             st.write(answer)
